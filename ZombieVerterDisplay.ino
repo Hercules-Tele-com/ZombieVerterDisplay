@@ -12,7 +12,7 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <ElegantOTA.h>
+#include <AsyncElegantOTA.h>
 #include <ArduinoJson.h>
 
 #define AP_SSID "ZombieDisplay"
@@ -146,10 +146,9 @@ void setup() {
   inputManager.Setup();
   canSdo.Setup();
 
-  timer = timerBegin(0, 240, true); // Timer 0, clock divisor 80
-  timerAttachInterrupt(timer, &timerInterrupt, true); // Attach the interrupt handling function
-  timerAlarmWrite(timer, 50000, true); // Interrupt every 50ms
-  timerAlarmEnable(timer); // Enable the alarm
+  // New ESP32 Arduino Core 3.x timer API
+  timer = timerBegin(20); // 20 Hz = interrupt every 50ms (1000ms / 50ms = 20Hz)
+  timerAttachInterrupt(timer, &timerInterrupt); // Attach the interrupt handling function
 
   //wifi
   WiFi.mode(WIFI_AP);
@@ -329,7 +328,7 @@ void setup() {
       request->send(200);
     }, handleUpload);
 
-  ElegantOTA.begin(&server);    // Start ElegantOTA
+  AsyncElegantOTA.begin(&server);    // Start AsyncElegantOTA
   server.begin();
 
 
@@ -337,6 +336,7 @@ void setup() {
 
 void loop() {
 
+  AsyncElegantOTA.loop();
   displayManager.Loop();
   inputManager.Loop();
 
