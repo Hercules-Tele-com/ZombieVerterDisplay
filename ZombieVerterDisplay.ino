@@ -12,6 +12,7 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+// ElegantOTA 3.x - must include AFTER ESPAsyncWebServer for async mode
 #include <ElegantOTA.h>
 #include <ArduinoJson.h>
 
@@ -328,7 +329,8 @@ void setup() {
       request->send(200);
     }, handleUpload);
 
-  ElegantOTA.begin(&server);    // Start ElegantOTA in async mode
+  // ElegantOTA 3.x auto-detects AsyncWebServer mode
+  ElegantOTA.begin(&server);
   server.begin();
 
 
@@ -336,7 +338,7 @@ void setup() {
 
 void loop() {
 
-  // ElegantOTA.loop() is not needed in async mode
+  ElegantOTA.loop();
   displayManager.Loop();
   inputManager.Loop();
 
