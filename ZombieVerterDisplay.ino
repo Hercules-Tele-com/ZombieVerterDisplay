@@ -1,3 +1,7 @@
+// Prevent HTTP method conflicts between WebServer and AsyncWebServer
+#define HTTP_GET    _HTTP_GET
+#define HTTP_POST   _HTTP_POST
+
 #include <Arduino.h>
 
 #include "pin_config.h"
@@ -12,7 +16,7 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-// ElegantOTA 3.x - must include AFTER ESPAsyncWebServer for async mode
+// ElegantOTA 3.x - include AFTER ESPAsyncWebServer for async mode
 #include <ElegantOTA.h>
 #include <ArduinoJson.h>
 
