@@ -17,9 +17,37 @@ This project supports multiple display configurations using conditional compilat
 - Display Controller: ST7262 / EK9716
 - Touch Controller: GT911 (I2C)
 
+## Build System Support
+
+This project supports **both Arduino IDE and PlatformIO**:
+
+### Arduino IDE
+- Manual display selection via `display_config.h`
+- Traditional Arduino workflow
+- See instructions below
+
+### PlatformIO (Recommended)
+- **Automatic** display selection via build environments
+- No manual configuration editing needed!
+- Faster builds, better IntelliSense
+- CLI and VSCode support
+
+**Quick PlatformIO Commands:**
+```bash
+# Waveshare display
+pio run -e waveshare_7inch -t upload
+
+# SPI display
+pio run -e spi_display -t upload
+```
+
+📚 **See [PLATFORMIO_GUIDE.md](PLATFORMIO_GUIDE.md) for complete PlatformIO documentation**
+
 ## How to Switch Displays
 
-### Step 1: Edit `display_config.h`
+### For Arduino IDE Users
+
+#### Step 1: Edit `display_config.h`
 
 Open the file `/ZombieVerterDisplay/display_config.h` and find this section near the top:
 
@@ -45,32 +73,38 @@ Open the file `/ZombieVerterDisplay/display_config.h` and find this section near
 - Comment out `#define USE_SPI_DISPLAY` by adding `//` in front
 - Uncomment `#define USE_WAVESHARE_7INCH_RGB` by removing `//`
 
-### Step 2: Install Required Libraries
+**Note:** PlatformIO users can skip this step - the build environment sets this automatically!
 
-#### For SPI Display:
+#### Step 2: Install Required Libraries
+
+**For SPI Display:**
 - TFT_eSPI
 - LVGL (v8.3.x)
 
-#### For Waveshare 7" RGB Display:
+**For Waveshare 7" RGB Display:**
 - ESP32_Display_Panel (v0.1.4 or later)
 - ESP32_IO_Expander (v0.0.3)
 - LVGL (v8.3.x)
 
 You can install these through the Arduino Library Manager.
 
-### Step 3: Configure TFT_eSPI (SPI Display Only)
+**Note:** PlatformIO users don't need to manually install libraries - they're defined in `platformio.ini`!
+
+#### Step 3: Configure TFT_eSPI (SPI Display Only)
 
 If using the SPI display, you'll need to configure TFT_eSPI for your specific hardware:
 1. Locate the TFT_eSPI library folder in your Arduino libraries directory
 2. Edit `User_Setup.h` or create a custom setup file
 3. Configure the pins according to your hardware (see `pin_config.h`)
 
-### Step 4: Compile and Upload
+#### Step 4: Compile and Upload (Arduino IDE)
 
 After selecting your display configuration:
 1. **Clean build** (recommended): Delete the `build` folder if it exists
 2. **Compile**: Verify your sketch in Arduino IDE
 3. **Upload**: Flash to your ESP32 device
+
+**PlatformIO users:** See [PLATFORMIO_GUIDE.md](PLATFORMIO_GUIDE.md) for build commands.
 
 ## Technical Details
 

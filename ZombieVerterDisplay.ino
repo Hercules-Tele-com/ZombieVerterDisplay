@@ -12,7 +12,7 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <AsyncElegantOTA.h>
+#include <ElegantOTA.h>
 #include <ArduinoJson.h>
 
 #define AP_SSID "ZombieDisplay"
@@ -329,7 +329,7 @@ void setup() {
       request->send(200);
     }, handleUpload);
 
-  AsyncElegantOTA.begin(&server);    // Start AsyncElegantOTA
+  ElegantOTA.begin(&server);    // Start ElegantOTA
   server.begin();
 
 

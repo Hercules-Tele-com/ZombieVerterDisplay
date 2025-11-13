@@ -3,6 +3,10 @@
  *
  * This file allows you to switch between different display configurations
  * by changing a single define.
+ *
+ * Compatible with both Arduino IDE and PlatformIO:
+ * - Arduino IDE: Manually uncomment one option below
+ * - PlatformIO: Automatically set by environment (see platformio.ini)
  */
 
 #pragma once
@@ -10,12 +14,18 @@
 // *******************************************************
 // ** SELECT YOUR DISPLAY HERE - UNCOMMENT ONE OPTION **
 // *******************************************************
+// Note: When using PlatformIO, these are set automatically
+// by the build environment and you don't need to edit this file.
 
-// Option 1: Original 320x170 SPI Display (using TFT_eSPI)
-//#define USE_SPI_DISPLAY
+#if !defined(USE_SPI_DISPLAY) && !defined(USE_WAVESHARE_7INCH_RGB)
+    // Default selection for Arduino IDE (only used if not set by PlatformIO)
 
-// Option 2: Waveshare ESP32-S3-Touch-LCD-7 (800x480 RGB Display)
-#define USE_WAVESHARE_7INCH_RGB
+    // Option 1: Original 320x170 SPI Display (using TFT_eSPI)
+    //#define USE_SPI_DISPLAY
+
+    // Option 2: Waveshare ESP32-S3-Touch-LCD-7 (800x480 RGB Display)
+    #define USE_WAVESHARE_7INCH_RGB
+#endif
 
 // *******************************************************
 
