@@ -1,7 +1,3 @@
-// Prevent HTTP method conflicts between WebServer and AsyncWebServer
-#define HTTP_GET    _HTTP_GET
-#define HTTP_POST   _HTTP_POST
-
 #include <Arduino.h>
 
 #include "pin_config.h"
@@ -16,8 +12,7 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-// ElegantOTA 3.x - include AFTER ESPAsyncWebServer for async mode
-#include <ElegantOTA.h>
+#include <AsyncElegantOTA.h>
 #include <ArduinoJson.h>
 
 #define AP_SSID "ZombieDisplay"
@@ -333,8 +328,7 @@ void setup() {
       request->send(200);
     }, handleUpload);
 
-  // ElegantOTA 3.x auto-detects AsyncWebServer mode
-  ElegantOTA.begin(&server);
+  AsyncElegantOTA.begin(&server);
   server.begin();
 
 
@@ -342,7 +336,7 @@ void setup() {
 
 void loop() {
 
-  ElegantOTA.loop();
+  AsyncElegantOTA.loop();
   displayManager.Loop();
   inputManager.Loop();
 
