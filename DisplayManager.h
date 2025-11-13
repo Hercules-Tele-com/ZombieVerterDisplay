@@ -4,6 +4,17 @@
 #include <lvgl.h>
 #include "CanSDO.h"
 #include <ArduinoJson.h>
+#include "display_config.h"
+
+// Include appropriate display driver based on configuration
+#if USE_TFT_ESPI
+    #include <TFT_eSPI.h>
+#endif
+
+#if USE_ESP_PANEL
+    #include <ESP_Panel_Library.h>
+    #include "lvgl_port_v8.h"
+#endif
 
 #define MAX_PARAMETERS 150
 

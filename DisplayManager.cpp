@@ -1,23 +1,32 @@
 #include <Arduino.h>
 #include "DisplayManager.h"
 #include "DataRetriever.h"
-#include <TFT_eSPI.h>
-#include <SPI.h>
+#include "display_config.h"
 #include "ui.h"
 #include "pin_config.h"
 #include "Globals.h"
 #include "FS.h"
 #include "SPIFFS.h"
 #include <ArduinoJson.h>
-#include "FS.h"
 
-TFT_eSPI tft = TFT_eSPI();
-static const uint16_t screenWidth  = 320;
-static const uint16_t screenHeight = 170;
+// Display dimensions from configuration
+static const uint16_t screenWidth  = DISPLAY_WIDTH;
+static const uint16_t screenHeight = DISPLAY_HEIGHT;
 
-static lv_disp_draw_buf_t draw_buf;
-static lv_color_t buf1[ screenWidth * screenHeight / 13 ];
-extern void flushThunk( lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p );
+// Display driver instances based on configuration
+#if USE_TFT_ESPI
+    #include <TFT_eSPI.h>
+    #include <SPI.h>
+    TFT_eSPI tft = TFT_eSPI();
+
+    static lv_disp_draw_buf_t draw_buf;
+    static lv_color_t buf1[ DISPLAY_WIDTH * DISPLAY_HEIGHT / LVGL_BUFFER_DIVIDER ];
+    extern void flushThunk( lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p );
+#endif
+
+#if USE_ESP_PANEL
+    ESP_Panel *panel = nullptr;
+#endif
 
 // External reference to global paramsDoc from main ino file
 extern DynamicJsonDocument paramsDoc;
@@ -214,6 +223,8 @@ void DisplayManager::DecrementIndex() {
 }
 
 void DisplayManager::Flusher( lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p ) {
+#if USE_TFT_ESPI
+  // TFT_eSPI flusher for SPI displays
   uint32_t w = ( area->x2 - area->x1 + 1 );
   uint32_t h = ( area->y2 - area->y1 + 1 );
 
@@ -223,11 +234,28 @@ void DisplayManager::Flusher( lv_disp_drv_t *disp, const lv_area_t *area, lv_col
   tft.endWrite();
 
   lv_disp_flush_ready( disp );
+#endif
+
+#if USE_ESP_PANEL
+  // ESP_Panel flusher is handled by lvgl_port_v8.cpp
+  // This method may not be called for RGB displays using the LVGL port
+  lv_disp_flush_ready( disp );
+#endif
 }
 
 
 void DisplayManager::Setup() {
+  Serial.print("Display Configuration: ");
+  Serial.println(DISPLAY_TYPE_NAME);
+  Serial.print("Resolution: ");
+  Serial.print(DISPLAY_WIDTH);
+  Serial.print("x");
+  Serial.println(DISPLAY_HEIGHT);
 
+#if USE_TFT_ESPI
+  // ============================================================
+  // SPI Display Setup (TFT_eSPI)
+  // ============================================================
   pinMode(PIN_POWER_ON, OUTPUT);
   digitalWrite(PIN_POWER_ON, HIGH);
   tft.begin();
@@ -264,15 +292,13 @@ void DisplayManager::Setup() {
   pinMode(PIN_LCD_BL, OUTPUT);
   digitalWrite(PIN_LCD_BL, HIGH);
 
-  //lvgl init
+  // LVGL initialization for TFT_eSPI
   lv_init();
-
-  lv_disp_draw_buf_init( &draw_buf, buf1, NULL, screenWidth * screenHeight / 13 );
+  lv_disp_draw_buf_init( &draw_buf, buf1, NULL, screenWidth * screenHeight / LVGL_BUFFER_DIVIDER );
 
   /* Initialize the display */
   static lv_disp_drv_t disp_drv;
   lv_disp_drv_init( &disp_drv );
-  /* Change the following line to your display resolution */
   disp_drv.hor_res = screenWidth;
   disp_drv.ver_res = screenHeight;
   disp_drv.draw_buf = &draw_buf;
@@ -280,12 +306,47 @@ void DisplayManager::Setup() {
   lv_disp_drv_register( &disp_drv );
 
   tft.fillScreen(TFT_BLACK);
+  Serial.println("TFT_eSPI display initialized");
+#endif
 
+#if USE_ESP_PANEL
+  // ============================================================
+  // RGB Display Setup (ESP_Panel for Waveshare 7" RGB)
+  // ============================================================
+  Serial.println("Initializing ESP_Panel...");
+
+  panel = new ESP_Panel();
+
+  // Initialize panel
+  panel->init();
+
+  #if ESP_PANEL_USE_LCD
+    Serial.println("Initializing LCD...");
+    panel->getLcd()->begin();
+  #endif
+
+  #if ESP_PANEL_USE_TOUCH
+    Serial.println("Initializing Touch...");
+    panel->getTouch()->begin();
+  #endif
+
+  // Initialize LVGL using lvgl_port
+  Serial.println("Initializing LVGL...");
+  if (!lvgl_port_init(panel->getLcd(), panel->getTouch())) {
+    Serial.println("LVGL port initialization failed!");
+    while(1) { delay(1000); }
+  }
+
+  Serial.println("ESP_Panel display initialized");
+#endif
+
+  // UI initialization (common for both displays)
   ui_init();
-  
+
   // Load parameters from JSON for settings screens
   LoadParameters();
 
+  Serial.println("DisplayManager Setup Complete");
 }
 
 void DisplayManager::Screen1Refresh() {
