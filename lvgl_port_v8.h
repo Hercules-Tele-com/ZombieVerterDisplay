@@ -5,9 +5,13 @@
  */
 #pragma once
 
-#include <ESP_Panel_Library.h>
-#include <lvgl.h>
 #include "display_config.h"
+#if USE_ESP_PANEL
+#include <ESP_Panel_Library.h>
+#endif
+#include <lvgl.h>
+
+#if USE_ESP_PANEL
 
 // *INDENT-OFF*
 
@@ -165,3 +169,5 @@ bool lvgl_port_unlock(void);
 #ifdef __cplusplus
 }
 #endif
+
+#endif // USE_ESP_PANEL

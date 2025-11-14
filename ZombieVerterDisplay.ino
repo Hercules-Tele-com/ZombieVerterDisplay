@@ -70,7 +70,7 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
 
 bool parseParamsFile() {
   // Open file for reading
-  File file = SPIFFS.open("/params.json", "r");
+  fs::File file = SPIFFS.open("/params.json", "r");
   if (!file) {
     Serial.println("Failed to open params.json file");
     return false;
@@ -107,7 +107,7 @@ bool parseParamsFile() {
 
 // Save parameters back to SPIFFS
 bool saveParamsFile() {
-  File file = SPIFFS.open("/params.json", "w");
+  fs::File file = SPIFFS.open("/params.json", "w");
   if (!file) {
     Serial.println("Failed to open params.json for writing");
     return false;
@@ -253,7 +253,7 @@ void setup() {
   server.on("/api/settings", HTTP_GET, [](AsyncWebServerRequest *request){
         // Open settings file if it exists
         if (SPIFFS.exists("/settings.json")) {
-            File file = SPIFFS.open("/settings.json", "r");
+            fs::File file = SPIFFS.open("/settings.json", "r");
             if (file) {
                 String settings = file.readString();
                 file.close();
@@ -301,7 +301,7 @@ void setup() {
             }
 
             // Save to SPIFFS
-            File file = SPIFFS.open("/settings.json", "w");
+            fs::File file = SPIFFS.open("/settings.json", "w");
             if (!file) {
                 request->send(500, "application/json", "{\"error\":\"Failed to save settings\"}");
                 Serial.println("Failed to open settings.json for writing");

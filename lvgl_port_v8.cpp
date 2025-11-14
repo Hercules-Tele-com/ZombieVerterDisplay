@@ -4,10 +4,14 @@
  * SPDX-License-Identifier: CC0-1.0
  */
 #include <Arduino.h>
+#include "display_config.h"
+#if USE_ESP_PANEL
 #include <ESP_Panel_Library.h>
+#endif
 #include <lvgl.h>
 #include "lvgl_port_v8.h"
-#include "display_config.h"
+
+#if USE_ESP_PANEL
 
 #define LVGL_PORT_BUFFER_NUM_MAX       (2)
 
@@ -435,8 +439,8 @@ void rounder_callback(lv_disp_drv_t *drv, lv_area_t *area)
 
 static lv_disp_t *display_init(ESP_PanelLcd *lcd)
 {
-    ESP_PANEL_CHECK_FALSE_RET(lcd != nullptr, nullptr, "Invalid LCD device");
-    ESP_PANEL_CHECK_FALSE_RET(lcd->getHandle() != nullptr, nullptr, "LCD device is not initialized");
+    ESP_UTILS_CHECK_FALSE_RETURN(lcd != nullptr, nullptr, "Invalid LCD device");
+    ESP_UTILS_CHECK_FALSE_RETURN(lcd->getHandle() != nullptr, nullptr, "LCD device is not initialized");
 
     static lv_disp_draw_buf_t disp_buf;
     static lv_disp_drv_t disp_drv;
@@ -530,8 +534,8 @@ static void touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
 
 static lv_indev_t *indev_init(ESP_PanelTouch *tp)
 {
-    ESP_PANEL_CHECK_FALSE_RET(tp != nullptr, nullptr, "Invalid touch device");
-    ESP_PANEL_CHECK_FALSE_RET(tp->getHandle() != nullptr, nullptr, "Touch device is not initialized");
+    ESP_UTILS_CHECK_FALSE_RETURN(tp != nullptr, nullptr, "Invalid touch device");
+    ESP_UTILS_CHECK_FALSE_RETURN(tp->getHandle() != nullptr, nullptr, "Touch device is not initialized");
 
     static lv_indev_drv_t indev_drv_tp;
 
@@ -594,9 +598,9 @@ IRAM_ATTR bool onRefreshFinishCallback(void *user_data)
 
 bool lvgl_port_init(ESP_PanelLcd *lcd, ESP_PanelTouch *tp)
 {
-    ESP_PANEL_CHECK_FALSE_RET(lcd != nullptr, false, "Invalid LCD device");
+    ESP_UTILS_CHECK_FALSE_RETURN(lcd != nullptr, false, "Invalid LCD device");
 #if LVGL_PORT_AVOID_TEAR
-    ESP_PANEL_CHECK_FALSE_RET(lcd->getBus()->getType() == ESP_PANEL_BUS_TYPE_RGB, false, "Avoid tearing function only works with RGB LCD now");
+    ESP_UTILS_CHECK_FALSE_RETURN(lcd->getBus()->getType() == ESP_PANEL_BUS_TYPE_RGB, false, "Avoid tearing function only works with RGB LCD now");
     ESP_LOGD(TAG, "Avoid tearing is enabled, mode: %d", LVGL_PORT_AVOID_TEARING_MODE);
 #endif
 
@@ -605,12 +609,12 @@ bool lvgl_port_init(ESP_PanelLcd *lcd, ESP_PanelTouch *tp)
 
     lv_init();
 #if !LV_TICK_CUSTOM
-    ESP_PANEL_CHECK_ERR_RET(tick_init(), false, "Initialize LVGL tick failed");
+    ESP_UTILS_CHECK_ERROR_RETURN(tick_init(), false, "Initialize LVGL tick failed");
 #endif
 
     ESP_LOGD(TAG, "Initialize LVGL display driver");
     disp = display_init(lcd);
-    ESP_PANEL_CHECK_NULL_RET(disp, false, "Initialize LVGL display driver failed");
+    ESP_UTILS_CHECK_NULL_RETURN(disp, false, "Initialize LVGL display driver failed");
     // Record the initial rotation of the display
     lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
 
@@ -623,7 +627,7 @@ bool lvgl_port_init(ESP_PanelLcd *lcd, ESP_PanelTouch *tp)
     if (tp != nullptr) {
         ESP_LOGD(TAG, "Initialize LVGL input driver");
         indev = indev_init(tp);
-        ESP_PANEL_CHECK_NULL_RET(indev, false, "Initialize LVGL input driver failed");
+        ESP_UTILS_CHECK_NULL_RETURN(indev, false, "Initialize LVGL input driver failed");
 
 #if LVGL_PORT_ROTATION_DEGREE == 90
         tp->swapXY(!tp->getSwapXYFlag());
@@ -639,13 +643,13 @@ bool lvgl_port_init(ESP_PanelLcd *lcd, ESP_PanelTouch *tp)
 
     ESP_LOGD(TAG, "Create mutex for LVGL");
     lvgl_mux = xSemaphoreCreateRecursiveMutex();
-    ESP_PANEL_CHECK_NULL_RET(lvgl_mux, false, "Create LVGL mutex failed");
+    ESP_UTILS_CHECK_NULL_RETURN(lvgl_mux, false, "Create LVGL mutex failed");
 
     ESP_LOGD(TAG, "Create LVGL task");
     BaseType_t core_id = (LVGL_PORT_TASK_CORE < 0) ? tskNO_AFFINITY : LVGL_PORT_TASK_CORE;
     BaseType_t ret = xTaskCreatePinnedToCore(lvgl_port_task, "lvgl", LVGL_PORT_TASK_STACK_SIZE, NULL,
                      LVGL_PORT_TASK_PRIORITY, &lvgl_task_handle, core_id);
-    ESP_PANEL_CHECK_FALSE_RET(ret == pdPASS, false, "Create LVGL task failed");
+    ESP_UTILS_CHECK_FALSE_RETURN(ret == pdPASS, false, "Create LVGL task failed");
 
 #if LVGL_PORT_AVOID_TEAR
     lcd->attachRefreshFinishCallback(onRgbVsyncCallback, (void *)lvgl_task_handle);
@@ -656,7 +660,7 @@ bool lvgl_port_init(ESP_PanelLcd *lcd, ESP_PanelTouch *tp)
 
 bool lvgl_port_lock(int timeout_ms)
 {
-    ESP_PANEL_CHECK_NULL_RET(lvgl_mux, false, "LVGL mutex is not initialized");
+    ESP_UTILS_CHECK_NULL_RETURN(lvgl_mux, false, "LVGL mutex is not initialized");
 
     const TickType_t timeout_ticks = (timeout_ms < 0) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
     return (xSemaphoreTakeRecursive(lvgl_mux, timeout_ticks) == pdTRUE);
@@ -664,9 +668,11 @@ bool lvgl_port_lock(int timeout_ms)
 
 bool lvgl_port_unlock(void)
 {
-    ESP_PANEL_CHECK_NULL_RET(lvgl_mux, false, "LVGL mutex is not initialized");
+    ESP_UTILS_CHECK_NULL_RETURN(lvgl_mux, false, "LVGL mutex is not initialized");
 
     xSemaphoreGiveRecursive(lvgl_mux);
 
     return true;
 }
+
+#endif // USE_ESP_PANEL
