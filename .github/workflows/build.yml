@@ -1,0 +1,52 @@
+name: PlatformIO CI
+
+on:
+  push:
+    branches: [ "main", "master", "claude/**" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment:
+          - waveshare_7inch
+          - spi_display
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Cache PlatformIO
+      uses: actions/cache@v4
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install PlatformIO Core
+      run: pip install --upgrade platformio
+
+    - name: Build ${{ matrix.environment }}
+      run: pio run -e ${{ matrix.environment }}
+
+    - name: Build info
+      if: success()
+      run: |
+        echo "✅ Build succeeded for ${{ matrix.environment }}"
+        pio run -e ${{ matrix.environment }} -t size || true
