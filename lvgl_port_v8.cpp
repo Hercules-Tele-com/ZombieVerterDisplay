@@ -450,8 +450,10 @@ static lv_disp_t *display_init(ESP_PanelLcd *lcd)
     int buffer_size = 0;
 
     ESP_LOGD(TAG, "Malloc memory for LVGL buffer");
+    Serial.println("[display_init] Allocating LVGL buffers...");
 #if !LVGL_PORT_AVOID_TEAR
     // Avoid tearing function is disabled
+    Serial.println("[display_init] LVGL_PORT_AVOID_TEAR is disabled - using heap allocation");
     buffer_size = LVGL_PORT_BUFFER_SIZE;
     for (int i = 0; (i < LVGL_PORT_BUFFER_NUM) && (i < LVGL_PORT_BUFFER_NUM_MAX); i++) {
         buf[i] = heap_caps_malloc(buffer_size * sizeof(lv_color_t), LVGL_PORT_BUFFER_MALLOC_CAPS);
@@ -460,11 +462,15 @@ static lv_disp_t *display_init(ESP_PanelLcd *lcd)
     }
 #else
     // To avoid the tearing effect, we should use at least two frame buffers: one for LVGL rendering and another for RGB output
+    Serial.println("[display_init] LVGL_PORT_AVOID_TEAR is enabled - using RGB framebuffers");
     buffer_size = LVGL_PORT_DISP_WIDTH * LVGL_PORT_DISP_HEIGHT;
+    Serial.print("[display_init] Buffer size: ");
+    Serial.println(buffer_size);
 #if (LVGL_PORT_DISP_BUFFER_NUM >= 3) && (LVGL_PORT_ROTATION_DEGREE == 0) && LVGL_PORT_FULL_REFRESH
 
     // With the usage of three buffers and full-refresh, we always have one buffer available for rendering,
     // eliminating the need to wait for the RGB's sync signal
+    Serial.println("[display_init] Mode: 3 buffers, full refresh, no rotation");
     lvgl_port_rgb_last_buf = lcd->getRgbBufferByIndex(0);
     buf[0] = lcd->getRgbBufferByIndex(1);
     buf[1] = lcd->getRgbBufferByIndex(2);
@@ -473,19 +479,33 @@ static lv_disp_t *display_init(ESP_PanelLcd *lcd)
 
 #elif (LVGL_PORT_DISP_BUFFER_NUM >= 3) && (LVGL_PORT_ROTATION_DEGREE != 0)
 
+    Serial.println("[display_init] Mode: 3 buffers with rotation");
     buf[0] = lcd->getRgbBufferByIndex(2);
 
 #elif LVGL_PORT_DISP_BUFFER_NUM >= 2
 
+    Serial.print("[display_init] Mode: 2 buffers, getting RGB buffers from LCD panel, DISP_BUFFER_NUM=");
+    Serial.println(LVGL_PORT_DISP_BUFFER_NUM);
     for (int i = 0; (i < LVGL_PORT_DISP_BUFFER_NUM) && (i < LVGL_PORT_BUFFER_NUM_MAX); i++) {
         buf[i] = lcd->getRgbBufferByIndex(i);
+        Serial.print("[display_init] RGB buffer[");
+        Serial.print(i);
+        Serial.print("] = 0x");
+        Serial.println((uint32_t)buf[i], HEX);
     }
 
 #endif
 #endif /* LVGL_PORT_AVOID_TEAR */
 
+    Serial.print("[display_init] buf[0] = 0x");
+    Serial.print((uint32_t)buf[0], HEX);
+    Serial.print(", buf[1] = 0x");
+    Serial.println((uint32_t)buf[1], HEX);
+
     // initialize LVGL draw buffers
+    Serial.println("[display_init] Initializing LVGL draw buffers...");
     lv_disp_draw_buf_init(&disp_buf, buf[0], buf[1], buffer_size);
+    Serial.println("[display_init] LVGL draw buffers initialized");
 
     ESP_LOGD(TAG, "Register display driver to LVGL");
     lv_disp_drv_init(&disp_drv);
@@ -598,22 +618,37 @@ IRAM_ATTR bool onRefreshFinishCallback(void *user_data)
 
 bool lvgl_port_init(ESP_PanelLcd *lcd, ESP_PanelTouch *tp)
 {
+    Serial.println("[lvgl_port] Starting LVGL port initialization...");
     ESP_PANEL_CHECK_FALSE_RET(lcd != nullptr, false, "Invalid LCD device");
+    Serial.println("[lvgl_port] LCD device check passed");
+
 #if LVGL_PORT_AVOID_TEAR
+    Serial.print("[lvgl_port] Checking RGB bus type... ");
+    Serial.println(lcd->getBus()->getType());
     ESP_PANEL_CHECK_FALSE_RET(lcd->getBus()->getType() == ESP_PANEL_BUS_TYPE_RGB, false, "Avoid tearing function only works with RGB LCD now");
+    Serial.print("[lvgl_port] Avoid tearing mode: ");
+    Serial.println(LVGL_PORT_AVOID_TEARING_MODE);
     ESP_LOGD(TAG, "Avoid tearing is enabled, mode: %d", LVGL_PORT_AVOID_TEARING_MODE);
 #endif
 
     lv_disp_t *disp = nullptr;
     lv_indev_t *indev = nullptr;
 
+    Serial.println("[lvgl_port] Calling lv_init()...");
     lv_init();
+    Serial.println("[lvgl_port] lv_init() completed");
+
 #if !LV_TICK_CUSTOM
+    Serial.println("[lvgl_port] Initializing LVGL tick...");
     ESP_PANEL_CHECK_ERR_RET(tick_init(), false, "Initialize LVGL tick failed");
+    Serial.println("[lvgl_port] LVGL tick initialized");
 #endif
 
     ESP_LOGD(TAG, "Initialize LVGL display driver");
+    Serial.println("[lvgl_port] Calling display_init()...");
     disp = display_init(lcd);
+    Serial.print("[lvgl_port] display_init() returned: 0x");
+    Serial.println((uint32_t)disp, HEX);
     ESP_PANEL_CHECK_NULL_RET(disp, false, "Initialize LVGL display driver failed");
     // Record the initial rotation of the display
     lv_disp_set_rotation(disp, LV_DISP_ROT_NONE);
