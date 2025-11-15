@@ -332,12 +332,21 @@ void DisplayManager::Setup() {
 
   // Initialize LVGL using lvgl_port
   Serial.println("Initializing LVGL...");
+  Serial.print("LCD pointer: 0x");
+  Serial.println((uint32_t)panel->getLcd(), HEX);
+  Serial.print("Touch pointer: 0x");
+  Serial.println((uint32_t)panel->getTouch(), HEX);
+  Serial.print("Free heap before LVGL init: ");
+  Serial.println(ESP.getFreeHeap());
+
   if (!lvgl_port_init(panel->getLcd(), panel->getTouch())) {
-    Serial.println("LVGL port initialization failed!");
+    Serial.println("ERROR: LVGL port initialization failed!");
+    Serial.print("Free heap after failure: ");
+    Serial.println(ESP.getFreeHeap());
     while(1) { delay(1000); }
   }
 
-  Serial.println("ESP_Panel display initialized");
+  Serial.println("SUCCESS: ESP_Panel display initialized");
 #endif
 
   // UI initialization (common for both displays)
