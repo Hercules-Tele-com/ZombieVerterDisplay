@@ -60,8 +60,17 @@
     #define ESP_PANEL_LCD_HEIGHT             (480)
 
     // LCD Bus Settings - RGB Interface
-    #define ESP_PANEL_LCD_BUS_SKIP_INIT_HOST    (0)
+    #define ESP_PANEL_LCD_BUS_SKIP_INIT_HOST    (1)
     #define ESP_PANEL_LCD_BUS_TYPE              (ESP_PANEL_BUS_TYPE_RGB)
+
+    // 3-wire SPI settings (not used for RGB since BUS_SKIP_INIT_HOST=1)
+    #define ESP_PANEL_LCD_3WIRE_SPI_CS_USE_EXPNADER     (0)
+    #define ESP_PANEL_LCD_3WIRE_SPI_SCL_USE_EXPNADER    (0)
+    #define ESP_PANEL_LCD_3WIRE_SPI_SDA_USE_EXPNADER    (0)
+    #define ESP_PANEL_LCD_3WIRE_SPI_IO_CS               (-1)
+    #define ESP_PANEL_LCD_3WIRE_SPI_IO_SCK              (-1)
+    #define ESP_PANEL_LCD_3WIRE_SPI_IO_SDA              (-1)
+    #define ESP_PANEL_LCD_3WIRE_SPI_SCL_ACTIVE_EDGE     (0)
 
     // RGB Bus Parameters
     #define ESP_PANEL_LCD_RGB_CLK_HZ            (16 * 1000 * 1000)
@@ -113,6 +122,10 @@
     // LCD Reset Pin
     #define ESP_PANEL_LCD_IO_RST                (-1)
     #define ESP_PANEL_LCD_RST_LEVEL             (0)
+
+    // LCD Flags
+    #define ESP_PANEL_LCD_FLAGS_AUTO_DEL_PANEL_IO   (1)
+    #define ESP_PANEL_LCD_FLAGS_MIRROR_BY_CMD       (1)
 
     // Touch Configuration
     #define ESP_PANEL_USE_TOUCH                 (ESP_OPEN_TOUCH)
