@@ -48,7 +48,7 @@
     #define USE_TFT_ESPI 0
     #define USE_ESP_PANEL 1
     #define LVGL_BUFFER_DIVIDER 10  // Buffer size = width * height / divider
-    #define ESP_OPEN_TOUCH 1        // Touch enabled for Waveshare display
+    #define ESP_OPEN_TOUCH 0        // Touch DISABLED for testing - isolate display issues
 
     // Waveshare ESP32-S3-Touch-LCD-7 specific settings
     #define ESP_PANEL_USE_CUSTOM_BOARD       (1)
