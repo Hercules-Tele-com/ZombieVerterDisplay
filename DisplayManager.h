@@ -13,7 +13,7 @@
 
 #if USE_ESP_PANEL
     #include <ESP_Panel_Library.h>
-    #include "lvgl_port_v8.h"
+    // The library handles LVGL port automatically with built-in board support
 #endif
 
 #define MAX_PARAMETERS 150
