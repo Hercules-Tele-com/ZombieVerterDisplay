@@ -1,11 +1,27 @@
-/*
+/**
  * ESP_Panel_Conf.h
  *
- * ESP32_Display_Panel library configuration
- * This file is automatically detected by the library and includes our display_config.h
+ * Configuration for ESP32_Display_Panel library to use the built-in
+ * Waveshare ESP32-S3-Touch-LCD-7 board support.
  */
 
 #pragma once
 
-// Include our display configuration which defines all ESP_PANEL settings
-#include "display_config.h"
+/**
+ * Follow the steps to configure the ESP Panel:
+ *
+ * 1. Set the macro `ESP_PANEL_USE_SUPPORTED_BOARD` to 1 to use supported board.
+ * 2. Set the macro corresponding to the board you are using, such as
+ *    `ESP_PANEL_BOARD_WAVESHARE_ESP32_S3_TOUCH_LCD_7`
+ */
+
+#define ESP_PANEL_USE_SUPPORTED_BOARD       (1)         // Use supported board
+#define ESP_PANEL_BOARD_WAVESHARE_ESP32_S3_TOUCH_LCD_7    (1)
+
+// Additional LVGL and display settings
+#define ESP_PANEL_USE_LCD                   (1)         // Enable LCD
+#define ESP_PANEL_USE_TOUCH                 (0)         // Disable touch for now (testing)
+
+// LVGL port settings for anti-tearing with RGB display
+#define LVGL_PORT_AVOID_TEAR                (1)         // Enable to avoid tearing effect
+#define LVGL_PORT_ROTATION_DEGREE           (0)         // Display rotation in degrees
