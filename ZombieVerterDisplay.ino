@@ -127,12 +127,23 @@ void setup() {
   // put your setup code here, to run once:
 
   Serial.begin(115200);
-  delay(500);
+  delay(1000);  // Increased delay for serial to initialize
 
-  
+  Serial.println("\n\n========================================");
+  Serial.println("ZombieVerterDisplay Starting...");
+  Serial.println("========================================");
+  Serial.print("ESP32 Chip: ");
+  Serial.println(ESP.getChipModel());
+  Serial.print("Free Heap: ");
+  Serial.println(ESP.getFreeHeap());
+
+  Serial.println("Initializing SPIFFS...");
   if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)){
-      Serial.println("SPIFFS Mount Failed");
-      return;
+      Serial.println("ERROR: SPIFFS Mount Failed");
+      Serial.println("This is not critical - continuing anyway...");
+      // Don't return - continue without SPIFFS
+  } else {
+      Serial.println("SPIFFS mounted successfully");
   }
 
   if (parseParamsFile()) {
