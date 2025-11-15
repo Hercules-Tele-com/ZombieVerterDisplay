@@ -330,7 +330,7 @@ void DisplayManager::Setup() {
     panel->getTouch()->begin();
   #endif
 
-  // Initialize LVGL using lvgl_port
+  // Initialize LVGL - the library handles this with built-in board support
   Serial.println("Initializing LVGL...");
   Serial.print("LCD pointer: 0x");
   Serial.println((uint32_t)panel->getLcd(), HEX);
@@ -339,14 +339,13 @@ void DisplayManager::Setup() {
   Serial.print("Free heap before LVGL init: ");
   Serial.println(ESP.getFreeHeap());
 
-  if (!lvgl_port_init(panel->getLcd(), panel->getTouch())) {
-    Serial.println("ERROR: LVGL port initialization failed!");
-    Serial.print("Free heap after failure: ");
-    Serial.println(ESP.getFreeHeap());
-    while(1) { delay(1000); }
-  }
+  // The ESP32_Display_Panel library with built-in board support
+  // handles LVGL initialization automatically through panel->begin()
+  panel->begin();
 
   Serial.println("SUCCESS: ESP_Panel display initialized");
+  Serial.print("Free heap after init: ");
+  Serial.println(ESP.getFreeHeap());
 #endif
 
   // UI initialization (common for both displays)
